@@ -1,106 +1,68 @@
-import physics_engine
-import math_visualizer
-import ml_predictor
+import physics_engine as phys  # Shortening names like a real dev
+import math_visualizer as math_vis
+import ml_predictor as ml
+import sys
 
-def main():
-    print("--- Welcome to NeuralPhys-Sim (BYOP Project) ---")
-    ai = ml_predictor.PhysicsAI()
+def start_sim():
+    print("==========================================")
+    print("   NeuralPhys-Sim V1.0 (BYOP Project)     ")
+    print("   Developed for VIT Bhopal - 2nd Sem     ")
+    print("==========================================")
+
+    # Initializing the AI brain with degree 3 polynomial
+    brain = ml.PhysicsAI()
     
-    # 1. Pre-train AI using Physics Engine
-    a, v, r = physics_engine.generate_training_data(500)
-    acc = ai.train_model(a, v, r)
-    
+    print("\n[Step 1] Generating physics data for training...")
+    try:
+        # Generate 600 samples for better accuracy
+        angles, vels, ranges = phys.generate_training_data(600)
+        
+        print("[Step 2] Training the Polynomial Model...")
+        acc_score = brain.train_model(angles, vels, ranges)
+        print(f"Model Training Complete! Accuracy: {acc_score*100:.2f}%")
+        
+    except Exception as e:
+        print(f"Oops! Something went wrong during startup: {e}")
+        sys.exit()
+
+    # The User Interface Loop
     while True:
-        print("\n1. Visualise 3D Math Surface\n2. AI Range Prediction\n3. Exit")
-        choice = input("Select: ")
+        print("\n--- OPTIONS MENU ---")
+        print("1. Show 3D Calculus Surface (Visual)")
+        print("2. Predict Landing Range (AI Engine)")
+        print("3. Exit Program")
         
-        if choice == '1':
-            math_visualizer.plot_calculus_surface()
-        elif choice == '2':
-            ang = float(input("Angle (10-80): "))
-            vel = float(input("Velocity (m/s): "))
-            pred = ai.predict_range(ang, vel)
-            print(f"AI Predicted Range: {pred:.2f} meters (Accuracy: {acc*100:.1f}%)")
-        elif choice == '3':
+        user_choice = input("\nSelect an option (1, 2, or 3): ").strip()
+
+        if user_choice == '1':
+            print("Opening Graph Window... (Please close it to return to menu)")
+            math_vis.plot_calculus_surface()
+            
+        elif user_choice == '2':
+            print("\n--- AI Range Predictor ---")
+            try:
+                # Taking user inputs for prediction
+                u_ang = float(input("Enter Launch Angle (10-80 deg): "))
+                u_vel = float(input("Enter Launch Velocity (m/s): "))
+                
+                # Logic check for realistic values
+                if u_ang < 0 or u_ang > 90:
+                    print("Error: Angle should be between 0 and 90.")
+                    continue
+                
+                prediction = brain.predict_range(u_ang, u_vel)
+                print(f"-> Result: The AI thinks it will land at {prediction:.2f} meters.")
+                
+            except ValueError:
+                print("Error: Please enter numbers only!")
+
+        elif user_choice == '3':
+            print("Shutting down... Goodbye!")
             break
+            
+        else:
+            print("Invalid choice! Please pick 1, 2, or 3.")
 
+# Running the script
 if __name__ == "__main__":
-    main()
-
-import numpy as np
-from sklearn.linear_model import LinearRegression
-from sklearn.preprocessing import PolynomialFeatures
-
-class PhysicsAI:
-    def __init__(self):
-        self.poly = PolynomialFeatures(degree=3)
-        self.model = LinearRegression()
-
-    def train_model(self, angles, velocities, ranges):
-        X = np.column_stack((angles, velocities))
-        X_poly = self.poly.fit_transform(X)
-        self.model.fit(X_poly, ranges)
-        return self.model.score(X_poly, ranges)
-
-    def predict_range(self, angle, velocity):
-        X_input = self.poly.transform([[angle, velocity]])
-        return self.model.predict(X_input)[0]
-
-
-import numpy as np
-import matplotlib.pyplot as plt
-
-def plot_calculus_surface():
-    """Visualizes z = f(x, y) with contours."""
-    x = np.linspace(-5, 5, 100)
-    y = np.linspace(-5, 5, 100)
-    X, Y = np.meshgrid(x, y)
-    
-    # Example: A 'Ripple' function (Multivariable Calculus)
-    Z = np.sin(np.sqrt(X**2 + Y**2))
-
-    fig = plt.figure(figsize=(10, 7))
-    ax = fig.add_subplot(111, projection='3d')
-    surf = ax.plot_surface(X, Y, Z, cmap='viridis', alpha=0.8)
-    
-    # Adding a contour plot (Level Curves)
-    ax.contour(X, Y, Z, zdir='z', offset=-1.2, cmap='viridis')
-    
-    ax.set_title("3D Surface & Level Curves (Calculus)")
-    plt.show()
-
-
-import numpy as np
-
-def simulate_projectile(v0, angle, drag_coeff=0.1, mass=1.0):
-    """Calculates the range of a projectile considering air resistance."""
-    g = 9.81
-    dt = 0.1
-    theta = np.radians(angle)
-    
-    vx = v0 * np.cos(theta)
-    vy = v0 * np.sin(theta)
-    x, y = 0.0, 0.0
-    
-    # Numerical integration (Euler Method)
-    while y >= 0:
-        v = np.sqrt(vx**2 + vy**2)
-        # Drag force approximation
-        drag = 0.5 * drag_coeff * v**2
-        ax = -(drag * (vx/v)) / mass
-        ay = -g - (drag * (vy/v)) / mass
-        
-        vx += ax * dt
-        vy += ay * dt
-        x += vx * dt
-        y += vy * dt
-        
-        if x > 2000: break # Safety break
-    return x
-
-def generate_training_data(n_samples=100):
-    """Generates a dataset for the AI to learn from."""
-    angles = np.random.uniform(10, 80, n_samples)
-    velocities = np.random.uniform(10, 100, n_samples)
-    ranges = [simulate_projectile(v, a) for v, a in zip(velocities, angles)]
-    return angles, velocities, ranges
+    start_sim()
