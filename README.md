@@ -1,2 +1,2 @@
-# NeuralPhys-Sim_framework.
-This project provides a "Digital Laboratory" where users can simulate, visualize, and predict physical phenomena. It moves beyond simple exercises by using AI to approximate physical laws, showing how Machine Learning can solve differential equations faster than traditional methods.
+Branch: feature-physicsPhysics Engine 🛠️Purpose: Implementation of numerical integration for ballistic motion.Core LogicAlgorithm: Euler Method for differential equations.Variable: Atmospheric Drag. 
+Output: Generates "Ground Truth" datasets ($Angle, Velocity to Range) for AI training.
